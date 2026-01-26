@@ -36,3 +36,12 @@ def text_node_to_html_node(node):
         return LeafNode("img", "", {"src": node.url, "alt": node.text})
     else:
         raise ValueError("Unknown TextType")
+    
+class BlockType(Enum):
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
+
