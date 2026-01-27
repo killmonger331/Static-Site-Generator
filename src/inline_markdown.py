@@ -1,4 +1,5 @@
-from textnode import TextNode, TextType, BlockType
+from htmlnode import ParentNode
+from textnode import TextNode, TextType, BlockType, text_node_to_html_node
 import re
 
 
@@ -114,3 +115,92 @@ def block_to_block_type(block):
     # Default
     return BlockType.PARAGRAPH
 
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    html_nodes = []
+    for tn in text_nodes:
+        html_nodes.append(text_node_to_html_node(tn))
+    return html_nodes
+
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    children = []
+
+    for block in blocks:
+        block_type = block_to_block_type(block)
+
+        # PARAGRAPH
+        if block_type == BlockType.PARAGRAPH:
+            children.append(
+                ParentNode(
+                    "p",
+                    text_to_children(block.replace("\n", " "))
+                )
+            )
+
+        # HEADING
+        elif block_type == BlockType.HEADING:
+            level = len(block.split(" ")[0])  # number of #'s
+            text = block[level + 1:]
+            children.append(
+                ParentNode(
+                    f"h{level}",
+                    text_to_children(text)
+                )
+            )
+
+        # CODE BLOCK (special case 🚨)
+        elif block_type == BlockType.CODE:
+            text = block.strip("`").lstrip("\n")
+            code_node = text_node_to_html_node(
+                TextNode(text, TextType.TEXT)
+            )
+            children.append(
+                ParentNode(
+                    "pre",
+                    [ParentNode("code", [code_node])]
+                )
+            )
+
+        # QUOTE
+        elif block_type == BlockType.QUOTE:
+            text = "\n".join(
+                line.lstrip("> ").rstrip()
+                for line in block.split("\n")
+            )
+            children.append(
+                ParentNode(
+                    "blockquote",
+                    text_to_children(text)
+                )
+            )
+
+        # UNORDERED LIST
+        elif block_type == BlockType.UNORDERED_LIST:
+            items = []
+            for line in block.split("\n"):
+                text = line[2:]
+                items.append(
+                    ParentNode("li", text_to_children(text))
+                )
+            children.append(
+                ParentNode("ul", items)
+            )
+
+        # ORDERED LIST
+        elif block_type == BlockType.ORDERED_LIST:
+            items = []
+            for line in block.split("\n"):
+                text = line.split(". ", 1)[1]
+                items.append(
+                    ParentNode("li", text_to_children(text))
+                )
+            children.append(
+                ParentNode("ol", items)
+            )
+
+        else:
+            raise ValueError(f"Unknown block type: {block_type}")
+
+    return ParentNode("div", children)
