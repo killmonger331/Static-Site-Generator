@@ -1,39 +1,29 @@
-from textnode import TextNode, TextType
 import os
 import shutil
-from copystatic import copy_static
-print("hello world")
+
+from copystatic import copy_files_recursive
+from gencontent import generate_page
+
+dir_path_static = "./static"
+dir_path_public = "./public"
+dir_path_content = "./content"
+template_path = "./template.html"
+
 
 def main():
-    copy_static("static", "public")
-    output = TextNode("Sample Text", TextType.TEXT, "http://example.com")
-    print(output)    
-if __name__ == "__main__":
-    main()
+    print("Deleting public directory...")
+    if os.path.exists(dir_path_public):
+        shutil.rmtree(dir_path_public)
+
+    print("Copying static files to public directory...")
+    copy_files_recursive(dir_path_static, dir_path_public)
+
+    print("Generating page...")
+    generate_page(
+        os.path.join(dir_path_content, "index.md"),
+        template_path,
+        os.path.join(dir_path_public, "index.html"),
+    )
+
 
 main()
-
-
-
-def copy_static(src: str, dst: str):
-    """
-    Recursively copy all contents from src to dst.
-    Deletes dst first to ensure a clean copy.
-    """
-    if os.path.exists(dst):
-        print(f"Removing existing directory: {dst}")
-        shutil.rmtree(dst)
-
-    os.mkdir(dst)
-
-    for item in os.listdir(src):
-        src_path = os.path.join(src, item)
-        dst_path = os.path.join(dst, item)
-
-        if os.path.isfile(src_path):
-            shutil.copy(src_path, dst_path)
-            print(f"Copied file: {src_path} -> {dst_path}")
-
-        else:
-            print(f"Entering directory: {src_path}")
-            copy_static(src_path, dst_path)
