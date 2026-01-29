@@ -1,0 +1,1 @@
+python3 src/main.py "/Static-Site-Generator/content" "/Static-Site-Generator/template.html" "/Static-Site-Generator/public" "/Static-Site-Generator/"
